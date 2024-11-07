@@ -904,8 +904,6 @@ footer {
                     <ul>
                         <li>Project Management</li>
                         <li>Design Consultation</li>
-                        <li>Permit Processing</li>
-                        <li>Historic Renovations</li>
                     </ul>
                 </div>
             </div>
@@ -952,11 +950,16 @@ footer {
         <div class="container">
             <h2 style="color: white;">Contact Us</h2>
             <div class="contact-form aos-init aos-animate" data-aos="fade-up">
-                <form id="contactForm" style="background: rgba(255,255,255,0.95); padding: 40px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);" novalidate="">
+                <form action="https://formspree.io/f/mbljokkw"
+                method="POST" id="contactForm" style="background: rgba(255,255,255,0.95); padding: 40px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);" novalidate="">
                     <div class="form-group">
                         <label for="fullName" style="display: block; color: var(--primary-color); margin-bottom: 8px;">Full Name *</label>
                         <input type="text" id="fullName" name="fullName" required="" placeholder="John Smith" aria-label="Full Name" style="margin-bottom: 20px;">
                     </div>
+                    <div style="display: none;">
+                        <label for="critical" style="display: none;"></label>
+                        <input type="text" id="critical" name="critical" style="display: none;" aria-label="critical" />
+                    </div>                
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <div class="form-group">
                             <label for="email" style="display: block; color: var(--primary-color); margin-bottom: 8px;">Email Address *</label>
@@ -986,6 +989,7 @@ footer {
                             <option value="100k-250k">$100,000 - $250,000</option>
                             <option value="250k-500k">$250,000 - $500,000</option>
                             <option value="500k+">$500,000+</option>
+                            <option value="unknown">Unknown</option>
                         </select>
                     </div>
                     <div class="form-group" style="margin-top: 20px;">
@@ -1004,6 +1008,7 @@ footer {
                     <p style="font-size: 0.9em; color: var(--primary-color); margin-top: 20px;">* Required fields</p>
                     <button type="submit" style="width: 100%; margin-top: 20px; padding: 15px; font-size: 1.1em;">Submit Request</button>
                 </form>
+                <div id="formAlert" style="display: none; padding: 10px; margin-top: 15px; border-radius: 5px;"></div>
             </div>
         </div>
     </section>
@@ -1121,26 +1126,100 @@ footer {
                 });
 
 
-                $('#contactForm').on('submit', function(e) {
-                    e.preventDefault();
-                    
-                    let isValid = true;
-                    $(this).find('[required]').each(function() {
-                        if (!$(this).val()) {
-                            isValid = false;
-                            $(this).css('border-color', '#ff0000');
-                        } else {
-                            $(this).css('border-color', '#ddd');
-                        }
-                    });
+                let lastSubmitTime = 0;
+                const rateLimitInterval = 10000;
 
-                    if (!isValid) {
-                        alert('Please fill in all required fields');
+                document.getElementById("contactForm").addEventListener("submit", function(event) {
+                    event.preventDefault();
+                    const honeypot = document.getElementById('critical').value;
+                    if (honeypot) {
+                        e.preventDefault();
                         return;
                     }
 
-                    alert('Thank you for your submission! We will contact you shortly.');
-                    this.reset();
+                    const currentTime = Date.now();
+                    if (currentTime - lastSubmitTime < rateLimitInterval) {
+                        alert('You are submitting too quickly. Please wait a few seconds before submitting again.');
+                        return;
+                    }
+
+                    lastSubmitTime = currentTime;
+
+                    const form = event.target;
+                    const formData = new FormData(form);
+                    const alertBox = document.getElementById("formAlert");
+
+                    let formValid = true;
+                    const requiredFields = form.querySelectorAll("[required]");
+                    requiredFields.forEach(field => {
+                        if (!field.value.trim()) {
+                            formValid = false;
+                            field.style.borderColor = "red";
+                        } else {
+                            field.style.borderColor = "";
+                        }
+                    });
+
+                    if (!formValid) {
+                        alertBox.style.display = "block";
+                        alertBox.style.backgroundColor = "#f8d7da";
+                        alertBox.style.color = "#721c24";
+                        alertBox.textContent = "Please fill in all required fields.";
+                        setTimeout(() => alertBox.style.display = "none", 5000);
+                        return;
+                    } else {
+                        alertBox.style.display = "none";
+                    }
+
+                    alertBox.style.display = "none";
+                    alertBox.textContent = "";
+                    
+                    fetch("https://formspree.io/f/mbljokkw", {
+                        method: "POST",
+                        body: formData,
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.ok) {
+                            alertBox.style.display = "block";
+                            alertBox.style.backgroundColor = "#d4edda";
+                            alertBox.style.color = "#155724";
+                            alertBox.textContent = "Thank you for your submission! We will contact you shortly.";
+                            form.reset();
+
+                            setTimeout(() => alertBox.style.display = "none", 5000);
+                        } else {
+                            let message = "Please fill in all required fields.";
+                            console.log(data)
+                            if (data.errors) {
+                                console.log(data.errors)
+                                const emailError = data.errors.find(error => error.field === 'email' && error.code === 'TYPE_EMAIL');
+                                console.log(emailError)
+                                if (emailError) {
+                                    message = 'Email must be a valid address.';
+                                }
+                            }
+
+                            alertBox.style.display = "block";
+                            alertBox.style.backgroundColor = "#f8d7da";
+                            alertBox.style.color = "#721c24";
+                            alertBox.textContent = message;
+
+                            console.log("Validation error:", data);
+
+                            setTimeout(() => alertBox.style.display = "none", 5000);
+                        }
+                    })
+                    .catch(error => {
+                        alertBox.style.display = "block";
+                        alertBox.style.backgroundColor = "#f8d7da";
+                        alertBox.style.color = "#721c24";
+                        alertBox.textContent = "Unexpected error. Please try again later or email us at sales@quinnkaneconstruction.com.";
+                        console.log("Network error:", error);
+                    });
                 });
 
                 $('#contactForm input, #contactForm textarea').on('input', function() {
