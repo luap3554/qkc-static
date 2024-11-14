@@ -37,18 +37,17 @@
 }
 
 .menu-toggle {
-    display: none;
+    display: none; /* Hidden by default for larger screens */
     flex-direction: column;
-    gap: 5px;
+    justify-content: space-between; /* Ensure equal spacing between bars */
     cursor: pointer;
     width: 30px;
-    height: 25px;
-    padding: 8px;
-    margin-right: 15px;
+    height: 30px;
+    padding: 10px;
     z-index: 1002;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    transition: background 0.3s;
+    position: relative;
+    background: transparent;
+    border: none;
 }
 
 .menu-toggle:hover {
@@ -65,8 +64,8 @@
 }
 
 @media (max-width: 768px) {
-    .nav-links {
-        top: 70px;
+    .menu-toggle {
+        display: flex; /* Make menu toggle visible on smaller screens */
     }
 
     .hero {
@@ -114,33 +113,41 @@
         border-bottom: none;
     }
 
-    .menu-toggle.active {
-        background: rgba(255, 255, 255, 0.15);
-    }
-
-    .menu-toggle.active span {
-        background-color: #ffffff;
-    }
+    .menu-toggle span {
+    display: block;
+    width: 100%; /* Full width of the .menu-toggle container */
+    height: 3px; /* Thickness of each bar */
+    background-color: #ffffff; /* White color for bars */
+    transition: all 0.3s ease-in-out;
+    border-radius: 2px;
+    position: relative; /* Adjust to simplify positioning */
 }
 
-@media (max-width: 768px) {
-    .navbar {
-        padding: 10px 0;
-        background: var(--primary-color);
-    }
+/* State for default appearance of bars */
+.menu-toggle span:nth-child(1) {
+    transform: none;
+}
 
-    /* Enhance hamburger menu animation */
-    .menu-toggle.active span:nth-child(1) {
-        transform: translateY(8px) rotate(45deg);
-    }
+.menu-toggle span:nth-child(2) {
+    opacity: 1; /* Ensure this bar is visible initially */
+}
 
-    .menu-toggle.active span:nth-child(2) {
-        opacity: 0;
-    }
+.menu-toggle span:nth-child(3) {
+    transform: none;
+}
 
-    .menu-toggle.active span:nth-child(3) {
-        transform: translateY(-8px) rotate(-45deg);
-    }
+/* Active state (showing an "X") */
+.menu-toggle.active span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+
+.menu-toggle.active span:nth-child(2) {
+    opacity: 0; /* Hide the middle bar to form an "X" */
+}
+
+.menu-toggle.active span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
 
     .nav-links.active {
         display: flex;
