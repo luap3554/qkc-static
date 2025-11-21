@@ -488,31 +488,6 @@
     
     <script src="assets/js/main.js" defer></script>
     
-    <script>
-        $(document).ready(function() {
-            // Force menu functionality in case main.js has issues or loading delays
-            $('.menu-toggle').off('click').on('click', function(e) {
-                e.stopPropagation();
-                e.preventDefault();
-                $(this).toggleClass('active');
-                $('.nav-links').toggleClass('active');
-            });
-
-            // Close menu when any link is clicked
-            $('.nav-links a').on('click', function() {
-                $('.nav-links').removeClass('active');
-                $('.menu-toggle').removeClass('active');
-            });
-
-            // Close menu when clicking outside
-            $(document).on('click touchstart', function(e) {
-                if (!$(e.target).closest('.navbar-container').length) {
-                    $('.nav-links').removeClass('active');
-                    $('.menu-toggle').removeClass('active');
-                }
-            });
-        });
-    </script>
 </body>
 </html>            "latitude": 42.5920,
             "longitude": -88.4334
