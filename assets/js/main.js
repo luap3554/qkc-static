@@ -1,59 +1,43 @@
 $(document).ready(function() {
-    // Initialize AOS (Animate On Scroll)
+    // 1. Initialize Animations (Fixes missing Process section)
     AOS.init({
         duration: 1000,
         once: true
     });
 
-    // "Get Started" button smooth scroll to contact form
-    const buttons = document.querySelectorAll(".getStartedBtn");
-    buttons.forEach(button => {
-        button.addEventListener("click", function(event) {
-            const contactForm = document.getElementById("contact");
-            if(contactForm) {
-                contactForm.scrollIntoView({ behavior: 'smooth' });
-            }
-        });
-    });
-    
-    // 1. Menu Toggle Handler
+    // 2. Menu Toggle (Fixes Pancake Button)
     $('.menu-toggle').click(function(e) {
         e.stopPropagation();
         $(this).toggleClass('active');
         $('.nav-links').toggleClass('active');
     });
 
-    // 2. Close menu when clicking outside
+    // 3. Close Menu when clicking outside
     $(document).on('click touchstart', function(e) {
         if (!$(e.target).closest('.navbar-container').length) {
             $('.nav-links').removeClass('active');
             $('.menu-toggle').removeClass('active');
-            $('body').removeClass('nav-open');
         }
     });
 
-    // 3. Handle Navigation Links (Smooth Scroll + Close Menu)
+    // 4. Smooth Scrolling (Fixes "Long time to scroll")
     $('.nav-links a').click(function(e) {
-        e.preventDefault(); // Stop the default "jump"
+        e.preventDefault();
         
-        // Close the mobile menu
+        // Close menu first
         $('.nav-links').removeClass('active');
         $('.menu-toggle').removeClass('active');
-        $('.menu-toggle').children('span').css({
-            'transform': 'none',
-            'opacity': '1'
-        });
         
-        // Scroll to the target section
+        // Scroll fast (300ms)
         let target = $(this).attr('href');
         if (target && target !== '#' && $(target).length) {
             $('html, body').animate({
-                scrollTop: $(target).offset().top - 90 // Offset for fixed header
-            }, 300); // CHANGED: Reduced from 1000ms to 300ms for faster scrolling
+                scrollTop: $(target).offset().top - 90
+            }, 300);
         }
     });
 
-    // Initialize Swiper for Portfolio
+    // 5. Initialize Portfolio Slider (Fixes Gallery)
     const portfolioSwiper = new Swiper('.portfolio-swiper', {
         slidesPerView: 1,
         spaceBetween: 30,
@@ -61,6 +45,61 @@ $(document).ready(function() {
         pagination: {
             el: '.swiper-pagination',
             clickable: true,
+        },
+        navigation: {
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
+        },
+        breakpoints: {
+            768: { slidesPerView: 2 },
+            1024: { slidesPerView: 3 }
+        },
+        autoplay: {
+            delay: 3000,
+            disableOnInteraction: false,
+        }
+    });
+
+    // 6. Contact Form Handling
+    const contactForm = document.getElementById("contactForm");
+    if (contactForm) {
+        contactForm.addEventListener("submit", function(event) {
+            event.preventDefault();
+            // Honeypot check
+            if (document.getElementById('critical') && document.getElementById('critical').value) return;
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const alertBox = document.getElementById("formAlert");
+
+            fetch("https://formspree.io/f/mbljokkw", {
+                method: "POST",
+                body: formData,
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    if(alertBox) {
+                        alertBox.style.display = "block";
+                        alertBox.textContent = "Thank you! We will contact you shortly.";
+                        alertBox.style.backgroundColor = "#d4edda";
+                        alertBox.style.color = "#155724";
+                    }
+                    form.reset();
+                    setTimeout(() => { if(alertBox) alertBox.style.display = "none"; }, 5000);
+                } else {
+                    if(alertBox) {
+                        alertBox.style.display = "block";
+                        alertBox.textContent = "There was an error. Please try again.";
+                        alertBox.style.backgroundColor = "#f8d7da";
+                        alertBox.style.color = "#721c24";
+                    }
+                }
+            });
+        });
+    }
+});            clickable: true,
         },
         navigation: {
             nextEl: '.swiper-button-next',
