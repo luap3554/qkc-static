@@ -1,52 +1,51 @@
 $(document).ready(function() {
-    // 1. Initialize Animations (Fixes missing Process section)
-    // If this crashes, elements with data-aos will remain invisible
+    // 1. Initialize Animations
     try {
-        AOS.init({
-            duration: 1000,
-            once: true
-        });
-    } catch (error) {
-        console.log("AOS Error:", error);
-    }
+        AOS.init({ duration: 1000, once: true });
+    } catch (error) { console.log("AOS Error:", error); }
 
-    // 2. Menu Toggle (Fixes Pancake Button)
-    $('.menu-toggle').click(function(e) {
-        e.stopPropagation();
+    // 2. Menu Toggle (Robust Version)
+    // We use 'off' first to prevent duplicate clicks, and listen to 'click' only.
+    // 'click' works perfectly on mobile and avoids touch conflicts.
+    $(document).off('click', '.menu-toggle').on('click', '.menu-toggle', function(e) {
+        e.preventDefault();
+        e.stopPropagation(); // critical: stops the "close outside" code from firing
         $(this).toggleClass('active');
         $('.nav-links').toggleClass('active');
     });
 
-    // 3. Close Menu when clicking outside
-    $(document).on('click touchstart', function(e) {
+    // 3. Close Menu when clicking anywhere else
+    $(document).on('click', function(e) {
+        // If the click is NOT inside the navbar, close the menu
         if (!$(e.target).closest('.navbar-container').length) {
             $('.nav-links').removeClass('active');
             $('.menu-toggle').removeClass('active');
-            $('body').removeClass('nav-open');
         }
     });
 
-    // 4. Smooth Scrolling (Fixes "Long time to scroll")
+    // 4. Smooth Scrolling for Navigation Links
     $('.nav-links a').click(function(e) {
-        e.preventDefault();
-        
-        // Close menu first
-        $('.nav-links').removeClass('active');
-        $('.menu-toggle').removeClass('active');
-        
-        // Scroll fast (300ms)
+        // Don't prevent default immediately or links might break; 
+        // just handle the scroll manually if it's an anchor link.
         let target = $(this).attr('href');
-        if (target && target !== '#' && $(target).length) {
+        if (target && target.startsWith('#') && $(target).length) {
+            e.preventDefault();
+            
+            // Close menu
+            $('.nav-links').removeClass('active');
+            $('.menu-toggle').removeClass('active');
+            
+            // Scroll
             $('html, body').animate({
                 scrollTop: $(target).offset().top - 90
             }, 300);
         }
     });
 
-    // 5. Get Started Button Logic
+    // 5. "Get Started" Button Logic
     const buttons = document.querySelectorAll(".getStartedBtn");
     buttons.forEach(button => {
-        button.addEventListener("click", function(event) {
+        button.addEventListener("click", function() {
             const contactForm = document.getElementById("contact");
             if(contactForm) {
                 contactForm.scrollIntoView({ behavior: 'smooth' });
@@ -54,49 +53,21 @@ $(document).ready(function() {
         });
     });
 
-    // 6. Initialize Portfolio Slider (Fixes Gallery)
-    // Use try-catch to prevent slider errors from breaking the whole site
+    // 6. Initialize Portfolio Slider
     try {
         const portfolioSwiper = new Swiper('.portfolio-swiper', {
             slidesPerView: 1,
             spaceBetween: 30,
             loop: true,
-            pagination: {
-                el: '.swiper-pagination',
-                clickable: true,
-            },
-            navigation: {
-                nextEl: '.swiper-button-next',
-                prevEl: '.swiper-button-prev',
-            },
+            pagination: { el: '.swiper-pagination', clickable: true },
+            navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
             breakpoints: {
                 768: { slidesPerView: 2 },
                 1024: { slidesPerView: 3 }
             },
-            autoplay: {
-                delay: 3000,
-                disableOnInteraction: false,
-            }
+            autoplay: { delay: 3000, disableOnInteraction: false }
         });
-
-        // Portfolio Filter Functionality
-        $('.filter-btn').click(function() {
-            $('.filter-btn').removeClass('active');
-            $(this).addClass('active');
-
-            let filter = $(this).data('filter');
-            portfolioSwiper.slides.each(function(slide) {
-                if (filter === 'all' || $(slide).hasClass(filter)) {
-                    $(slide).show();
-                } else {
-                    $(slide).hide();
-                }
-            });
-            portfolioSwiper.update();
-        });
-    } catch (error) {
-        console.log("Swiper Error:", error);
-    }
+    } catch (error) { console.log("Swiper Error:", error); }
 
     // 7. Contact Form Handling
     const contactForm = document.getElementById("contactForm");
@@ -118,7 +89,7 @@ $(document).ready(function() {
                     valid = false;
                     field.style.borderColor = "red";
                 } else {
-                    field.style.borderColor = "";
+                    field.style.borderColor = "#ddd";
                 }
             });
 
@@ -168,6 +139,7 @@ $(document).ready(function() {
             });
         });
 
+        // Clear red border on input
         $('#contactForm input, #contactForm textarea').on('input', function() {
             if ($(this).prop('required')) {
                 $(this).css('border-color', $(this).val() ? '#ddd' : '#ff0000');
