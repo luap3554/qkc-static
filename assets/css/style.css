@@ -433,7 +433,6 @@ body {
         display: flex;
         justify-content: center;
         align-items: center;
-        transition: 0.3s;
     }
 
     .swiper-slide img {
@@ -441,11 +440,25 @@ body {
         height: 400px;
         object-fit: cover;
         border-radius: 8px;
+        -ms-interpolation-mode: bicubic;
+        cursor: pointer;
+        transition: box-shadow 0.3s ease, border 0.3s ease;
+        border: 3px solid transparent;
+    }
+
+    .swiper-slide img:hover {
+        border: 3px solid var(--primary-color);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     }
 
     .swiper-button-next,
     .swiper-button-prev {
         color: var(--primary-color);
+    }
+
+    .swiper-pagination {
+        position: relative;
+        margin-top: 20px;
     }
 
     .swiper-pagination-bullet-active {
@@ -464,25 +477,18 @@ body {
     overflow: hidden;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    opacity: 1;
-    transition: opacity 0.3s ease-in-out;
 }
 
 .portfolio-item img {
     width: 100%;
     height: 300px;
     object-fit: cover;
-    transition: 0.3s;
     display: block;
+    -ms-interpolation-mode: bicubic;
 }
 
 .portfolio-item.hide {
     display: none;
-    opacity: 0;
-}
-
-.portfolio-item:hover img {
-    transform: scale(1.05);
 }
 
 .contact-form {
@@ -748,7 +754,7 @@ footer {
     object-fit: contain;
     border-radius: 4px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-    will-change: opacity;
+    -ms-interpolation-mode: bicubic;
 }
 
 /* Lightbox Thumbnails Panel - GPU Optimized */
@@ -793,8 +799,6 @@ footer {
     border: 2px solid transparent;
     flex-shrink: 0;
     background: #333;
-    transform: translateZ(0);
-    will-change: opacity, border-color;
     transition: opacity 0.15s ease-out, border-color 0.15s ease-out;
 }
 
@@ -891,16 +895,6 @@ footer {
         width: 55px;
         height: 40px;
     }
-}
-
-/* Make portfolio images clickable */
-.portfolio-swiper .swiper-slide img {
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
-
-.portfolio-swiper .swiper-slide img:hover {
-    transform: scale(1.02);
 }
 
 .services-grid {

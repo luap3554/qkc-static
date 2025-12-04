@@ -127,7 +127,7 @@ $(document).ready(function() {
             });
         }
         
-        // Load thumbnails that are in view
+        // Load thumbnails that are in view (thumbnails can load progressively, no need to hide)
         function loadVisibleThumbnails() {
             const container = lightboxThumbnails[0];
             const thumbs = container.querySelectorAll('.lightbox-thumb[data-src]');

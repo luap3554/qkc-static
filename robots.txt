@@ -1,0 +1,15 @@
+# robots.txt for Quinn Kane Construction
+# https://quinnkaneconstruction.com
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://quinnkaneconstruction.com/sitemap.xml
+
+# Disallow crawling of any test or archive pages
+Disallow: /ForIndextesting.html
+Disallow: /index-archive.html
+
+# Blog not ready yet
+Disallow: /blog/
