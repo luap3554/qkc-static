@@ -67,6 +67,97 @@ $(document).ready(function() {
             },
             autoplay: { delay: 3000, disableOnInteraction: false }
         });
+
+        // Stop carousel on navigation button click
+        $('.swiper-button-next, .swiper-button-prev, .swiper-pagination-bullet').on('click', function() {
+            portfolioSwiper.autoplay.stop();
+        });
+
+        // Create lightbox elements
+        const lightbox = $('<div class="portfolio-lightbox"></div>');
+        const lightboxContent = $('<div class="lightbox-content"></div>');
+        const lightboxImg = $('<img class="lightbox-image" src="" alt="Portfolio image">');
+        const lightboxClose = $('<button class="lightbox-close">&times;</button>');
+        const lightboxPrev = $('<button class="lightbox-nav lightbox-prev">&#10094;</button>');
+        const lightboxNext = $('<button class="lightbox-nav lightbox-next">&#10095;</button>');
+        
+        lightboxContent.append(lightboxImg);
+        lightbox.append(lightboxContent, lightboxClose, lightboxPrev, lightboxNext);
+        $('body').append(lightbox);
+
+        let currentImageIndex = 0;
+        let portfolioImages = [];
+
+        // Click on portfolio image to maximize
+        $(document).on('click', '.portfolio-swiper .swiper-slide img', function(e) {
+            e.stopPropagation();
+            portfolioSwiper.autoplay.stop();
+            
+            // Get all images from portfolio
+            portfolioImages = [];
+            $('.portfolio-swiper .swiper-slide:not(.swiper-slide-duplicate) img').each(function() {
+                portfolioImages.push($(this).attr('src'));
+            });
+            
+            // Find current image index
+            const clickedSrc = $(this).attr('src');
+            currentImageIndex = portfolioImages.indexOf(clickedSrc);
+            if (currentImageIndex === -1) currentImageIndex = 0;
+            
+            // Show lightbox
+            lightboxImg.attr('src', clickedSrc);
+            lightbox.addClass('active');
+            $('body').css('overflow', 'hidden');
+        });
+
+        // Click on slide (not just image) also stops carousel
+        $(document).on('click', '.portfolio-swiper .swiper-slide', function() {
+            portfolioSwiper.autoplay.stop();
+        });
+
+        // Navigate to previous image in lightbox
+        lightboxPrev.on('click', function(e) {
+            e.stopPropagation();
+            currentImageIndex = (currentImageIndex - 1 + portfolioImages.length) % portfolioImages.length;
+            lightboxImg.attr('src', portfolioImages[currentImageIndex]);
+        });
+
+        // Navigate to next image in lightbox
+        lightboxNext.on('click', function(e) {
+            e.stopPropagation();
+            currentImageIndex = (currentImageIndex + 1) % portfolioImages.length;
+            lightboxImg.attr('src', portfolioImages[currentImageIndex]);
+        });
+
+        // Close lightbox when clicking outside the image
+        lightbox.on('click', function(e) {
+            if (!$(e.target).closest('.lightbox-image').length) {
+                lightbox.removeClass('active');
+                $('body').css('overflow', '');
+                // Carousel stays stopped
+            }
+        });
+
+        // Close button
+        lightboxClose.on('click', function(e) {
+            e.stopPropagation();
+            lightbox.removeClass('active');
+            $('body').css('overflow', '');
+        });
+
+        // Keyboard navigation in lightbox
+        $(document).on('keydown', function(e) {
+            if (lightbox.hasClass('active')) {
+                if (e.key === 'ArrowLeft') {
+                    lightboxPrev.click();
+                } else if (e.key === 'ArrowRight') {
+                    lightboxNext.click();
+                } else if (e.key === 'Escape') {
+                    lightboxClose.click();
+                }
+            }
+        });
+
     } catch (error) { console.log("Swiper Error:", error); }
 
     // 7. Contact Form Handling
