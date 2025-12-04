@@ -220,25 +220,52 @@ $(document).ready(function() {
             $('body').css('overflow', '');
         });
 
-        // Touch swipe support for mobile
+        // Touch swipe support for mobile (single finger only, ignore pinch-to-zoom)
         let touchStartX = 0;
         let touchEndX = 0;
+        let touchStartY = 0;
+        let touchEndY = 0;
+        let isSingleTouch = true;
         const minSwipeDistance = 50;
 
         lightbox[0].addEventListener('touchstart', function(e) {
-            touchStartX = e.changedTouches[0].screenX;
+            // Only track single finger touches (not pinch-to-zoom)
+            if (e.touches.length === 1) {
+                isSingleTouch = true;
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            } else {
+                isSingleTouch = false;
+            }
+        }, { passive: true });
+
+        lightbox[0].addEventListener('touchmove', function(e) {
+            // If multiple fingers detected during move, it's a pinch gesture
+            if (e.touches.length > 1) {
+                isSingleTouch = false;
+            }
         }, { passive: true });
 
         lightbox[0].addEventListener('touchend', function(e) {
+            // Only handle swipe if it was a single finger gesture throughout
+            if (!isSingleTouch) return;
+            
             touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
             handleSwipe();
         }, { passive: true });
 
         function handleSwipe() {
-            const swipeDistance = touchEndX - touchStartX;
-            if (Math.abs(swipeDistance) < minSwipeDistance) return;
+            const swipeDistanceX = touchEndX - touchStartX;
+            const swipeDistanceY = touchEndY - touchStartY;
             
-            if (swipeDistance > 0) {
+            // Ignore if vertical swipe is greater than horizontal (scrolling, not swiping)
+            if (Math.abs(swipeDistanceY) > Math.abs(swipeDistanceX)) return;
+            
+            // Ignore small movements
+            if (Math.abs(swipeDistanceX) < minSwipeDistance) return;
+            
+            if (swipeDistanceX > 0) {
                 // Swiped right - go to previous
                 lightboxPrev.click();
             } else {
