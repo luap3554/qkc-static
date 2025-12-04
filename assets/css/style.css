@@ -736,7 +736,7 @@ footer {
 
 .lightbox-content {
     max-width: 90%;
-    max-height: 90vh;
+    max-height: 75vh;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -744,10 +744,67 @@ footer {
 
 .lightbox-image {
     max-width: 100%;
-    max-height: 85vh;
+    max-height: 70vh;
     object-fit: contain;
     border-radius: 4px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    will-change: opacity;
+}
+
+/* Lightbox Thumbnails Panel - GPU Optimized */
+.lightbox-thumbnails {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.75);
+    border-radius: 8px;
+    max-width: 90%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    will-change: transform;
+}
+
+.lightbox-thumbnails::-webkit-scrollbar {
+    height: 4px;
+}
+
+.lightbox-thumbnails::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.lightbox-thumbnails::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+}
+
+.lightbox-thumb {
+    width: 70px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0.5;
+    border: 2px solid transparent;
+    flex-shrink: 0;
+    background: #333;
+    transform: translateZ(0);
+    will-change: opacity, border-color;
+    transition: opacity 0.15s ease-out, border-color 0.15s ease-out;
+}
+
+.lightbox-thumb:hover {
+    opacity: 0.85;
+}
+
+.lightbox-thumb.active {
+    opacity: 1;
+    border-color: white;
 }
 
 .lightbox-close {
@@ -814,6 +871,25 @@ footer {
         top: 10px;
         right: 15px;
         font-size: 30px;
+    }
+    
+    .lightbox-content {
+        max-height: 60vh;
+    }
+    
+    .lightbox-image {
+        max-height: 55vh;
+    }
+    
+    .lightbox-thumbnails {
+        bottom: 10px;
+        padding: 8px 12px;
+        gap: 6px;
+    }
+    
+    .lightbox-thumb {
+        width: 55px;
+        height: 40px;
     }
 }
 

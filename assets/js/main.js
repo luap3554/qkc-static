@@ -80,24 +80,105 @@ $(document).ready(function() {
         const lightboxClose = $('<button class="lightbox-close">&times;</button>');
         const lightboxPrev = $('<button class="lightbox-nav lightbox-prev">&#10094;</button>');
         const lightboxNext = $('<button class="lightbox-nav lightbox-next">&#10095;</button>');
+        const lightboxThumbnails = $('<div class="lightbox-thumbnails"></div>');
         
         lightboxContent.append(lightboxImg);
-        lightbox.append(lightboxContent, lightboxClose, lightboxPrev, lightboxNext);
+        lightbox.append(lightboxContent, lightboxClose, lightboxPrev, lightboxNext, lightboxThumbnails);
         $('body').append(lightbox);
 
         let currentImageIndex = 0;
         let portfolioImages = [];
+        let thumbnailsBuilt = false;
+
+        // Build thumbnails once and cache them - with lazy loading
+        function buildThumbnails() {
+            if (thumbnailsBuilt) return;
+            
+            // Get all unique images
+            const seen = new Set();
+            $('.portfolio-swiper .swiper-slide:not(.swiper-slide-duplicate) img').each(function() {
+                const src = $(this).attr('src');
+                if (!seen.has(src)) {
+                    seen.add(src);
+                    portfolioImages.push(src);
+                }
+            });
+            
+            // Build all thumbnails at once with lazy loading
+            const fragment = document.createDocumentFragment();
+            portfolioImages.forEach((src, index) => {
+                const thumb = document.createElement('img');
+                thumb.className = 'lightbox-thumb';
+                thumb.loading = 'lazy';
+                thumb.decoding = 'async';
+                thumb.alt = 'Thumbnail';
+                thumb.dataset.index = index;
+                thumb.dataset.src = src;
+                // Use a tiny placeholder initially
+                thumb.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 50"%3E%3Crect fill="%23333" width="70" height="50"/%3E%3C/svg%3E';
+                fragment.appendChild(thumb);
+            });
+            lightboxThumbnails[0].appendChild(fragment);
+            thumbnailsBuilt = true;
+            
+            // Load visible thumbnails immediately, rest lazily
+            requestAnimationFrame(() => {
+                loadVisibleThumbnails();
+            });
+        }
+        
+        // Load thumbnails that are in view
+        function loadVisibleThumbnails() {
+            const container = lightboxThumbnails[0];
+            const thumbs = container.querySelectorAll('.lightbox-thumb[data-src]');
+            const containerRect = container.getBoundingClientRect();
+            
+            thumbs.forEach(thumb => {
+                const thumbRect = thumb.getBoundingClientRect();
+                // Load if in view or close to view
+                if (thumbRect.right > containerRect.left - 100 && thumbRect.left < containerRect.right + 100) {
+                    thumb.src = thumb.dataset.src;
+                    delete thumb.dataset.src;
+                }
+            });
+        }
+        
+        // Load more thumbnails on scroll
+        lightboxThumbnails.on('scroll', function() {
+            requestAnimationFrame(loadVisibleThumbnails);
+        });
+
+        // Update active thumbnail efficiently
+        function updateActiveThumbnail() {
+            requestAnimationFrame(() => {
+                const thumbs = lightboxThumbnails[0].querySelectorAll('.lightbox-thumb');
+                thumbs.forEach((thumb, i) => {
+                    thumb.classList.toggle('active', i === currentImageIndex);
+                });
+                // Scroll active into view
+                if (thumbs[currentImageIndex]) {
+                    thumbs[currentImageIndex].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    // Load nearby thumbnails after scroll
+                    setTimeout(loadVisibleThumbnails, 350);
+                }
+            });
+        }
+
+        // Thumbnail click handler (delegated)
+        lightboxThumbnails.on('click', '.lightbox-thumb', function(e) {
+            e.stopPropagation();
+            currentImageIndex = parseInt(this.dataset.index, 10);
+            lightboxImg[0].src = portfolioImages[currentImageIndex];
+            updateActiveThumbnail();
+        });
 
         // Click on portfolio image to maximize
         $(document).on('click', '.portfolio-swiper .swiper-slide img', function(e) {
             e.stopPropagation();
             portfolioSwiper.autoplay.stop();
             
-            // Get all images from portfolio
-            portfolioImages = [];
-            $('.portfolio-swiper .swiper-slide:not(.swiper-slide-duplicate) img').each(function() {
-                portfolioImages.push($(this).attr('src'));
-            });
+            // Build thumbnails on first open
+            buildThumbnails();
             
             // Find current image index
             const clickedSrc = $(this).attr('src');
@@ -105,7 +186,8 @@ $(document).ready(function() {
             if (currentImageIndex === -1) currentImageIndex = 0;
             
             // Show lightbox
-            lightboxImg.attr('src', clickedSrc);
+            lightboxImg[0].src = clickedSrc;
+            updateActiveThumbnail();
             lightbox.addClass('active');
             $('body').css('overflow', 'hidden');
         });
@@ -119,31 +201,51 @@ $(document).ready(function() {
         lightboxPrev.on('click', function(e) {
             e.stopPropagation();
             currentImageIndex = (currentImageIndex - 1 + portfolioImages.length) % portfolioImages.length;
-            lightboxImg.attr('src', portfolioImages[currentImageIndex]);
+            lightboxImg[0].src = portfolioImages[currentImageIndex];
+            updateActiveThumbnail();
         });
 
         // Navigate to next image in lightbox
         lightboxNext.on('click', function(e) {
             e.stopPropagation();
             currentImageIndex = (currentImageIndex + 1) % portfolioImages.length;
-            lightboxImg.attr('src', portfolioImages[currentImageIndex]);
+            lightboxImg[0].src = portfolioImages[currentImageIndex];
+            updateActiveThumbnail();
         });
 
-        // Close lightbox when clicking outside the image
-        lightbox.on('click', function(e) {
-            if (!$(e.target).closest('.lightbox-image').length) {
-                lightbox.removeClass('active');
-                $('body').css('overflow', '');
-                // Carousel stays stopped
-            }
-        });
-
-        // Close button
+        // Close button only (no click outside to close)
         lightboxClose.on('click', function(e) {
             e.stopPropagation();
             lightbox.removeClass('active');
             $('body').css('overflow', '');
         });
+
+        // Touch swipe support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const minSwipeDistance = 50;
+
+        lightbox[0].addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        lightbox[0].addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            const swipeDistance = touchEndX - touchStartX;
+            if (Math.abs(swipeDistance) < minSwipeDistance) return;
+            
+            if (swipeDistance > 0) {
+                // Swiped right - go to previous
+                lightboxPrev.click();
+            } else {
+                // Swiped left - go to next
+                lightboxNext.click();
+            }
+        }
 
         // Keyboard navigation in lightbox
         $(document).on('keydown', function(e) {
